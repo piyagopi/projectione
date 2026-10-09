@@ -8,9 +8,17 @@ st.set_page_config(page_title="ShelfSense AI", layout="centered")
 st.title("📦 ShelfSense AI — Retail Audit")
 st.write("Upload a photo of a retail shelf for instant inventory analysis.")
 
-# Securely load the API key from Streamlit secrets
-API_KEY = st.secrets["GEMINI_API_KEY"]
-client = genai.Client(api_key=API_KEY)
+# Fail-safe API Key loading: checks Secrets first, then falls back to Sidebar input
+api_key = st.secrets.get("GEMINI_API_KEY", None)
+
+if not api_key:
+    api_key = st.sidebar.text_input("Enter Gemini API Key", type="password")
+
+if not api_key:
+    st.info("👈 Please enter your Gemini API Key in the sidebar or save it in Streamlit Secrets to run the audit.")
+    st.stop()
+
+client = genai.Client(api_key=api_key)
 
 uploaded_file = st.file_uploader("Upload Store Shelf Photo", type=["jpg", "png", "jpeg"])
 
@@ -71,4 +79,4 @@ if uploaded_file:
                 st.info(f"Reorder **{rec['suggested_reorder_qty']} units** of {rec['restock_sku']}")
                 
             except Exception as e:
-                st.error("Error processing image. Please ensure the API key is correct and try again.")
+                st.error("Error processing image. Please check the API key and image file.")
