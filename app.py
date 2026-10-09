@@ -1,6 +1,5 @@
 import streamlit as st
-import google.genai as genai
-from google.genai import types
+import google.generativeai as genai
 import json
 from PIL import Image
 
@@ -8,17 +7,18 @@ st.set_page_config(page_title="ShelfSense AI", layout="centered")
 st.title("📦 ShelfSense AI — Retail Audit")
 st.write("Upload a photo of a retail shelf for instant inventory analysis.")
 
-# Fail-safe API Key loading: checks Secrets first, then falls back to Sidebar input
+# Load API key from Secrets or Sidebar
 api_key = st.secrets.get("GEMINI_API_KEY", None)
 
 if not api_key:
     api_key = st.sidebar.text_input("Enter Gemini API Key", type="password")
 
 if not api_key:
-    st.info("👈 Please enter your Gemini API Key in the sidebar or save it in Streamlit Secrets to run the audit.")
+    st.info("👈 Please enter your Gemini API Key in the sidebar or save it in Streamlit Secrets.")
     st.stop()
 
-client = genai.Client(api_key=api_key)
+# Configure Google Gemini SDK
+genai.configure(api_key=api_key)
 
 uploaded_file = st.file_uploader("Upload Store Shelf Photo", type=["jpg", "png", "jpeg"])
 
@@ -30,7 +30,7 @@ if uploaded_file:
         with st.spinner("Analyzing shelf space & calculating inventory metrics..."):
             prompt = """
             You are ShelfSense AI, an enterprise computer vision auditor.
-            Analyze the uploaded retail shelf image and return ONLY a valid JSON object matching this exact structure:
+            Analyze the uploaded retail shelf image and return ONLY a valid JSON object matching this exact structure (no markdown formatting):
             {
               "audit_summary": {
                 "total_items_detected": 14,
@@ -49,15 +49,13 @@ if uploaded_file:
             """
             
             try:
-                response = client.models.generate_content(
-                    model='gemini-1.5-flash',
-                    contents=[image, prompt],
-                    config=types.GenerateContentConfig(
-                        response_mime_type="application/json"
-                    )
-                )
+                # Use Gemini 1.5 Flash Vision
+                model = genai.GenerativeModel('gemini-1.5-flash')
+                response = model.generate_content([prompt, image])
                 
-                data = json.loads(response.text)
+                # Clean JSON string response
+                clean_text = response.text.replace("```json", "").replace("```", "").strip()
+                data = json.loads(clean_text)
                 
                 st.success("Audit Complete")
                 m = data["audit_summary"]
@@ -79,4 +77,4 @@ if uploaded_file:
                 st.info(f"Reorder **{rec['suggested_reorder_qty']} units** of {rec['restock_sku']}")
                 
             except Exception as e:
-                st.error("Error processing image. Please check the API key and image file.")
+                st.error(f"Error details: {e}")
