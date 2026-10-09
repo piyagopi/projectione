@@ -49,8 +49,8 @@ if uploaded_file:
             """
             
             try:
-                # Use Gemini 1.5 Flash Vision
-                model = genai.GenerativeModel('gemini-1.5-flash')
+                # UPDATED: Using the current Gemini 2.5 Flash model
+                model = genai.GenerativeModel('gemini-2.5-flash')
                 response = model.generate_content([prompt, image])
                 
                 # Clean JSON string response
