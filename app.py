@@ -50,7 +50,7 @@ if uploaded_file:
             
             try:
                 # UPDATED: Using the current Gemini 2.5 Flash model
-                model = genai.GenerativeModel('gemini-2.5-flash')
+                model = genai.GenerativeModel('gemini-3.8-flash')
                 response = model.generate_content([prompt, image])
                 
                 # Clean JSON string response
