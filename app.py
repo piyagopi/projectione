@@ -82,8 +82,8 @@ if choice == "📦 Dynamic Pricing Audit":
                         }
                         """
                         try:
-                            # FIX: Updated to the correct, supported model string
-                            model = genai.GenerativeModel("gemini-1.5-flash-latest") 
+                            # FIX: Used the most standard and universally supported model string
+                            model = genai.GenerativeModel("gemini-1.5-flash")
                             response = model.generate_content([prompt, image])
                             clean_text = response.text.replace("```json", "").replace("```", "").strip()
                             data = json.loads(clean_text)
